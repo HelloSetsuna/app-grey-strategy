@@ -115,5 +115,28 @@ isGreyFlow, host, port := AppGrey.Match(OnlineJsonDirect, map[ApiGreyDimension]s
 })
 ```
 
+## 样例DEMO
+查看 app-grey-demo.go 文件, 该 DEMO 模拟了一个简单的业务处理系统使用该 灰度放量策略解析模块 转发灰度流量的功能, 其内部写死了一套默认的JSON配置
+### 1. 运行 app-grey-demo.exe 
+```shell
+# 在 windows 开启三个命令行分别执行如下命令
+# 命令行一:
+app-grey-demo
+# 命令行二:
+app-grey-demo -grey -port 8081
+# 命令行三:
+app-grey-demo -grey -port 8082
+```
+### 2. 导入 POSTMAN 的配置文件
+打开 POSTMAN 将 app-grey-demo.postman_collection.json 文件导入, 具体参数看 POSTMAN 的配置, 可调整参数和更新灰度放量策略配置 测试
+#### GET http://localhost:8080/grey/strategy/json
+> 查看应用当前的灰度放量策略配置
+#### PUT http://localhost:8080/grey/strategy/json
+> 更新应用当前的灰度放量策略配置
+#### GET http://localhost:8080/api/v1/business/online-json-direct
+> 测试 online-json-direct 的业务接口灰度放量策略, 可以看到是有 8082 的 DEMO 返回的
+#### GET http://localhost:8080/api/v1/business/online-json-indirect
+> 测试 online-json-indirect 的业务接口灰度放量策略, 可以看到是有 8081 的 DEMO 返回的
+
 ## 实践后记
 接触 golang 时间较短, 尝试编写了该模块后在有些地方理解更加清晰了, 简洁的 go test, 简洁的 包 及 封装. 待后续迁移至公司仓库.

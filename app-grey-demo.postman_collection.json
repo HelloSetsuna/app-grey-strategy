@@ -1,0 +1,132 @@
+{
+	"info": {
+		"_postman_id": "5f0c422c-7ec8-4541-9003-9a05bbf7491e",
+		"name": "appgrey-demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/grey/strategy/json",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/grey/strategy/json",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"grey",
+						"strategy",
+						"json"
+					]
+				},
+				"description": "获取应用当前的灰度放量策略配置"
+			},
+			"response": []
+		},
+		{
+			"name": "/grey/strategy/json",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"version\": 0,\r\n    \"updatedBy\": \"某某某\",\r\n    \"updatedAt\": \"2021-05-13 15:52:00\",\r\n    \"host\": \"localhost\",\r\n    \"port\": 8081,\r\n    \"enable\": true,\r\n    \"apis\": {\r\n        \"online-json-direct\": {\r\n            \"enable\": true,\r\n            \"host\": \"localhost\",\r\n            \"port\": 8082,\r\n            \"name\": \"线下联机JSON直连业务\",\r\n            \"description\": \"基于 xxx 协议, 提供消费, 预授权, 退货...\",\r\n            \"rules\": [\r\n                {\r\n                    \"version\": {\r\n                        \"type\": \"in\",\r\n                        \"args\": [\r\n                            \"v1\"\r\n                        ]\r\n                    },\r\n                    \"storeId\": {\r\n                        \"type\": \"in\",\r\n                        \"args\": [\r\n                            \"SID000001\",\r\n                            \"SID000002\"\r\n                        ]\r\n                    }\r\n                },\r\n                {\r\n                    \"insCode\": {\r\n                        \"type\": \"pattern\",\r\n                        \"args\": [\r\n                            \"^INS0002.*\",\r\n                            \"^INS0003.*\"\r\n                        ]\r\n                    }\r\n                }\r\n            ]\r\n        },\r\n        \"online-json-indirect\": {\r\n            \"enable\": true,\r\n            \"name\": \"线下联机JSON间连业务\",\r\n            \"description\": \"基于 xxx 协议, 提供消费, 预授权, 退货...\",\r\n            \"rules\": [\r\n                {\r\n                    \"version\": {\r\n                        \"type\": \"in\",\r\n                        \"args\": [\r\n                            \"v2\",\r\n                            \"v3\"\r\n                        ]\r\n                    },\r\n                    \"insCode\": {\r\n                        \"type\": \"in\",\r\n                        \"args\": [\r\n                            \"INS000001\"\r\n                        ]\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/grey/strategy/json",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"grey",
+						"strategy",
+						"json"
+					]
+				},
+				"description": "设置应用当前的灰度放量策略配置"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v1/business/online-json-direct",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"storeId\":\"SID000003\",\r\n    \"insCode\":\"INS0002xx\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/business/online-json-direct",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"business",
+						"online-json-direct"
+					]
+				},
+				"description": "V1版本的测试请求"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v2/business/online-json-indirect",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"storeId\":\"SID000003\",\r\n    \"insCode\":\"INS000001\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v2/business/online-json-indirect",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v2",
+						"business",
+						"online-json-indirect"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
