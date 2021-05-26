@@ -132,11 +132,11 @@ isGreyFlow, host, port := AppGrey.Match(OnlineJsonDirect, map[ApiGreyDimension]s
 ```shell
 # 在 windows 开启三个命令行分别执行如下命令
 # 命令行一:
-app-grey-demo
+app-grey-demo -gateway
 # 命令行二:
-app-grey-demo -grey -port 8081
+app-grey-demo -server -port 8081
 # 命令行三:
-app-grey-demo -grey -port 8082
+app-grey-demo -server -port 8082
 ```
 ### 2. 导入 POSTMAN 的配置文件
 打开 POSTMAN 将 app-grey-demo.postman_collection.json 文件导入, 具体参数看 POSTMAN 的配置, 可调整参数和更新灰度放量策略配置 测试
