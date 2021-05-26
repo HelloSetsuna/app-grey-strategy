@@ -48,31 +48,37 @@ func (this apiGreyCondition) match(value string) bool {
 	return false
 }
 
-type apiGreyRule map[ApiGreyDimension]apiGreyCondition
+type apiGreyRule struct {
+	Host string          `json:"host,omitempty"`
+	Port int             `json:"port,omitempty"`
+	Conditions map[ApiGreyDimension]apiGreyCondition `json:"conditions"`
+}
 
-func (this apiGreyRule) match(dimension map[ApiGreyDimension]string) (isMatch bool) {
+func (this apiGreyRule) match(dimension map[ApiGreyDimension]string) (isMatch bool, host string, port int) {
 	if dimension == nil {
-		return false
+		return false, "", 0
 	}
 	// 判断规则中的每个条件是否都匹配
-	for greyDimension, condition := range this {
+	for greyDimension, condition := range this.Conditions {
 		// 取出条件对应的值
 		value := dimension[greyDimension]
 		if value == "" {
-			return false
+			return false, "", 0
 		}
 		// 判断条件是否匹配
 		if !condition.match(value) {
-			return false
+			return false, "", 0
 		}
 	}
-	return true
+	return true, this.Host, this.Port
 }
 
 // 接口灰度策略
 type apiGreyStrategy struct {
 	Name string          `json:"name,omitempty"`
 	//Description string   `json:"description,omitempty"`
+	DefaultHost string                       `json:"defaultHost,omitempty"`
+	DefaultPort int                          `json:"defaultPort,omitempty"`
 	Host string          `json:"host,omitempty"`
 	Port int             `json:"port,omitempty"`
 	Enable bool          `json:"enable,omitempty"`
@@ -83,10 +89,12 @@ type apiGreyStrategy struct {
 
 // 应用灰度策略
 type appGreyStrategy struct {
-	Version int64                        `json:"version"`
+	Version int64                            `json:"version"`
 	// 对灰度策略解析无关的变量 直接忽略，减少内存占用
-	//UpdatedBy string                     `json:"updatedBy"`
-	//UpdatedAt time.Time                  `json:"updatedAt"`
+	//UpdatedBy string                         `json:"updatedBy"`
+	//UpdatedAt time.Time                      `json:"updatedAt"`
+	DefaultHost string                       `json:"defaultHost"`
+	DefaultPort int                          `json:"defaultPort"`
 	Host string                              `json:"host"`
 	Port int                                 `json:"port"`
 	Enable bool                              `json:"enable,omitempty"`
@@ -104,6 +112,9 @@ func (this *appGreyStrategy) match(identify *ApiGreyIdentify, dimension map[ApiG
 		}
 	}()
 
+	defaultHost := this.DefaultHost
+	defaultPort := this.DefaultPort
+
 	if this.Enable && this.Apis != nil && this.Host != "" && this.Port != 0 {
 		if api, ok := this.Apis[*identify]; ok {
 			host = this.Host
@@ -114,11 +125,25 @@ func (this *appGreyStrategy) match(identify *ApiGreyIdentify, dimension map[ApiG
 			if api.Port != 0 {
 				port = api.Port
 			}
+			if api.DefaultHost != "" {
+				defaultHost = api.DefaultHost
+			}
+			if api.DefaultPort != 0 {
+				defaultPort = api.DefaultPort
+			}
 			if api.Enable && api.Rules != nil {
 				// 策略中任意一个规则匹配 则 返回匹配成功
 				for _, rule := range api.Rules {
 					// 处理每个规则的匹配
-					if rule.match(dimension) {
+					isMatch, ruleHost, rulePort := rule.match(dimension)
+					if isMatch {
+						// 如果规则本身有配置 转发的域名及端口，则使用规则的域名或端口配置
+						if ruleHost != "" {
+							host = ruleHost
+						}
+						if rulePort != 0 {
+							port = rulePort
+						}
 						return true, host, port
 					}
 				}
@@ -126,7 +151,7 @@ func (this *appGreyStrategy) match(identify *ApiGreyIdentify, dimension map[ApiG
 		}
 	}
 
-	return false, "", 0
+	return false, defaultHost, defaultPort
 }
 
 type Repository interface {
@@ -139,7 +164,7 @@ type appGrey struct {
 	ticker     *time.Ticker
 }
 
-func (this *appGrey) loadStrategy() error {
+func (this *appGrey) LoadStrategy() error {
 	// 查询灰度放量策略的 JSON 字符串
 	document, err := this.repository.GetAppGreyStrategy()
 	if err != nil {
@@ -166,7 +191,7 @@ func (this *appGrey) loadStrategy() error {
 
 func (this *appGrey) Initialize(repository Repository, updateInterval time.Duration) error {
 	this.repository = repository
-	if err := this.loadStrategy(); err != nil {
+	if err := this.LoadStrategy(); err != nil {
 		return err
 	}
 	// 处理定时更新规则, 只允许执行一次
@@ -175,7 +200,7 @@ func (this *appGrey) Initialize(repository Repository, updateInterval time.Durat
 		// 周期性的 每 updateInterval 尝试获取灰度策略更新至内存
 		go func() {
 			for range this.ticker.C {
-				if err := this.loadStrategy(); err != nil {
+				if err := this.LoadStrategy(); err != nil {
 					// TODO: 待改为使用日志组件打印异常日志
 					fmt.Printf("AppGrey ticker load strategy failed： %v\n", err)
 				}

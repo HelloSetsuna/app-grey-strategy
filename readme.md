@@ -5,60 +5,71 @@
 ## 配置格式
 每个应用有多种类型的业务接口, 而每个业务接口可能有多个放量规则, 每个放量策略将由多个维度匹配规则, 据此设计如下格式:
 ```json
-// 应用的整个灰度放量策略是一个JSON文档
+// 整个流量调度策略是一个JSON文档
 {
     "version": 0, // 版本号用于标识文档版本
     "updatedBy": "某某某", // 更新人
     "updatedAt": "2021-05-13 15:52:00", // 更新时间
-    "host": "grey.app-server.com", // 默认的 灰度环境域名
-    "port": 8080, // 默认的 灰度环境端口
+    "defaultHost": "server-host", // 默认路由的 灰度环境域名
+    "defaultPort": 8080, // 默认路由的 灰度环境端口
+    "host": "server-host-grey", // 默认转发的 灰度环境域名
+    "port": 8080, // 默认转发的 灰度环境端口
     "apis": {
-        // 某类业务接口 的 放量策略配置, 应用拿到放量策略配置后
-        // 根据 业务接口类型标识 (如:online-json-direct) 找到该配置内容, 判断是否灰度
+        // 某类业务接口 的 调度策略配置, ApiTransform 拿到调度策略配置后
+        // 根据 online-json-direct (业务接口类型标识)找到该配置内容, 判断是否灰度
         "online-json-direct": {
             "enable": true, // 启用或禁用 该类业务接口
-            "host": "grey.app-server.com", // 可覆盖默认的 灰度环境域名
+            "defaultHost": "server-host", // 默认路由的 灰度环境域名
+            "defaultPort": 8080, // 默认路由的 灰度环境端口
+            "host": "server-host-grey", // 可覆盖默认的 灰度环境域名
             "port": 8081, // 可覆盖默认的 灰度环境端口
             "name": "线下联机JSON直连业务", // UI 展示用途
-            "description": "基于 xxx 协议, 提供消费, 预授权, 退货...",
-            // 每个业务接口 可以有多个放量规则
+            "description": "基于 xxx 协议, 提供外卡消费, 预授权, 退货...",
+            // 每个业务接口 可以有多个调度规则
             "rules": [
-                // 某个放量规则定义, 其由多个维度条件匹配构成
+                // 某个调度规则定义, 其由多个维度条件匹配构成
                 {
-                    // 要求 版本号(version) 是 v1
-                    "version": {
-                        "type": "in", // 匹配类型 便于拓展
-                        "args": ["v1"] // 匹配参数 必须是数组 内部元素字符串
-                    },
-                    // 并且 门店号(storeId) 是 SID000001 或 SID000002
-                    "storeId": {
-                        "type": "in", 
-                        "args": ["SID000001", "SID000002"]
+                    "host": "server-host-grey", // 针对规则 可单独配置转发的域名
+                    "port": 8082, // 针对规则 可单独配置转发的端口
+                    "conditions": {
+                        // 要求 版本号(version) 是 v1
+                        "version": {
+                            "type": "in", // 匹配类型 便于拓展
+                            "args": ["v1"] // 匹配参数 必须是数组 内部元素字符串
+                        },
+                        // 并且 门店号(storeId) 是 SID000001 或 SID000002
+                        "storeId": {
+                            "type": "in", 
+                            "args": ["SID000001", "SID000002"]
+                        }
                     }
                 },
                 {
-                    "institutionCode": {
-                        "type": "pattern", // 正则匹配条件
-                        "args": ["^INS0002.*", "^INS0003.*"]
+                    "conditions": {
+                        "institutionCode": {
+                            "type": "pattern", 
+                            "args": ["^INS0002.*", "^INS0003.*"]
+                        }
                     }
                 }
             ]
         },
         // 另一类业务接口
-        "online-json-indirect": {
+        "/online-json-indirect/*": {
             "enable": false, // 启用或禁用 该类业务接口
-            "hostAndPort": null, // 可为空, 为空使用默认的灰度域名及端口
             "name": "线下联机JSON间连业务",
-            "description": "基于 xxx 协议, 提供消费, 预授权, 退货...",
+            "description": "基于 xxx 协议, 提供外卡消费, 预授权, 退货...",
             "rules": [
                 {
-                    "version": {
-                        "type": "in", 
-                        "args": ["v2", "v3"]
-                    },
-                    "institutionCode": {
-                        "type": "in", 
-                        "args": ["INS000001"]
+                    "conditions": {
+                        "version": {
+                            "type": "in", 
+                            "args": ["v2", "v3"]
+                        },
+                        "institutionCode": {
+                            "type": "in", 
+                            "args": ["INS000001"]
+                        }
                     }
                 }
             ]

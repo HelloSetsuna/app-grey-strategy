@@ -13,48 +13,59 @@ func (*AppGreyRepositoryExample) GetAppGreyStrategy() (string, error)  {
 		"version": 0, 
 		"updatedBy": "某某某", 
 		"updatedAt": "2021-05-13 15:52:00", 
+		"defaultHost": "app-server.com", 
+		"defaultPort": 80,
 		"host": "grey.app-server.com", 
 		"port": 8080,
 		"enable": true,
 		"apis": {
 			"online-json-direct": {
 				"enable": true, 
+				"defaultHost": "app-server.com", 
+				"defaultPort": 80,
 				"host": "grey.app-server.com", 
-				"port": 8081,
 				"name": "线下联机JSON直连业务", 
 				"description": "基于 xxx 协议, 提供消费, 预授权, 退货...",
 				"rules": [
 					{
-						"version": {
-							"type": "in", 
-							"args": ["v1"] 
-						},
-						"storeId": {
-							"type": "in", 
-							"args": ["SID000001", "SID000002"]
+						"port": 8081,
+						"conditions": {
+							"version": {
+								"type": "in", 
+								"args": ["v1"] 
+							},
+							"storeId": {
+								"type": "in", 
+								"args": ["SID000001", "SID000002"]
+							}
 						}
 					},
 					{
-						"insCode": {
-							"type": "pattern", 
-							"args": ["^INS0002.*", "^INS0003.*"]
+						"port": 8082,
+						"conditions": {
+							"insCode": {
+								"type": "pattern", 
+								"args": ["^INS0002.*", "^INS0003.*"]
+							}
 						}
 					}
 				]
 			},
 			"online-json-indirect": {
-				"enable": false,
+				"enable": true,
 				"name": "线下联机JSON间连业务",
 				"description": "基于 xxx 协议, 提供消费, 预授权, 退货...",
 				"rules": [
 					{
-						"version": {
-							"type": "in", 
-							"args": ["v2", "v3"]
-						},
-						"insCode": {
-							"type": "in", 
-							"args": ["INS000001"]
+						"conditions": {
+							"version": {
+								"type": "in", 
+								"args": ["v2", "v3"]
+							},
+							"insCode": {
+								"type": "in", 
+								"args": ["INS000001"]
+							}
 						}
 					}
 				]
@@ -116,19 +127,19 @@ func TestMatch(t *testing.T) {
 			Version: "v2",
 			StoreId: "SID000002",
 			InsCode: "",
-		}, false, "", 0 },
+		}, false, "app-server.com", 80 },
 
 		{OnlineJsonDirect, map[ApiGreyDimension]string{
 			Version: "v2",
 			StoreId: "SID000002",
 			InsCode: "INS0002xx",
-		}, true, "grey.app-server.com", 8081 },
+		}, true, "grey.app-server.com", 8082 },
 
-		{OnlineJsonDirect, map[ApiGreyDimension]string{
+		{OnlineJsonIndriect, map[ApiGreyDimension]string{
 			Version: "v2",
-			StoreId: "SID000002",
-			InsCode: "INS0001xx",
-		}, false, "", 0 },
+			StoreId: "SID000001",
+			InsCode: "INS000001",
+		}, true, "grey.app-server.com", 8080 },
 	}
 
 	for _, test := range tests {
